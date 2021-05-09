@@ -93,7 +93,6 @@ void CloseJoystick()
     }
 }
 
-
 int GetEventKeyVal(QKeyEvent* event)
 {
     int key = event->key();

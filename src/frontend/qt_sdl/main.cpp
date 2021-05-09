@@ -34,6 +34,7 @@
 #include <QPainter>
 #include <QKeyEvent>
 #include <QMimeData>
+#include <QMimeDatabase>
 #include <QVector>
 #ifndef _WIN32
 #include <QSocketNotifier>
@@ -66,6 +67,11 @@
 
 #include "NDS.h"
 #include "GBACart.h"
+#include "Slot2Cart.h"
+#ifdef OGLRENDERER_ENABLED
+#include "OpenGLSupport.h"
+#endif
+
 #include "GPU.h"
 #include "SPU.h"
 #include "Wifi.h"
@@ -418,6 +424,14 @@ void EmuThread::run()
                 sprintf(msg, "Solar sensor level: %d", level);
                 OSD::AddMessage(0, msg);
             }
+        }
+        
+        if (Slot2Cart_GuitarGrip::GuitarGripEnabled)
+        {
+            Slot2Cart_GuitarGrip::SetGripKey(GuitarKeys::Green, Input::HotkeyDown(HK_GuitarGripGreen));
+            Slot2Cart_GuitarGrip::SetGripKey(GuitarKeys::Red, Input::HotkeyDown(HK_GuitarGripRed));
+            Slot2Cart_GuitarGrip::SetGripKey(GuitarKeys::Yellow, Input::HotkeyDown(HK_GuitarGripYellow));
+            Slot2Cart_GuitarGrip::SetGripKey(GuitarKeys::Blue, Input::HotkeyDown(HK_GuitarGripBlue));
         }
 
 	if (Input::HotkeyPressed(HK_GuitarKeyGreen) || Input::HotkeyReleased(HK_GuitarKeyGreen))
@@ -1610,6 +1624,8 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
 
     Input::KeyRelease(event);
 }
+
+
 
 
 void MainWindow::dragEnterEvent(QDragEnterEvent* event)

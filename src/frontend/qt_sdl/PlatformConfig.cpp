@@ -61,6 +61,7 @@ int AudioSync;
 int ShowOSD;
 
 int ConsoleType;
+int Slot2Addon;
 int DirectBoot;
 int Slot2Addon;
 
@@ -176,6 +177,7 @@ ConfigEntry PlatformConfigFile[] =
     {"ShowOSD", 0, &ShowOSD, 1, NULL, 0},
 
     {"ConsoleType", 0, &ConsoleType, 0, NULL, 0},
+    {"Slot2Addon", 0, &Slot2Addon, 0, NULL, 0},
     {"DirectBoot", 0, &DirectBoot, 1, NULL, 0},
     {"Slot2Addon", 0, &Slot2Addon, 0, NULL, 0},
 

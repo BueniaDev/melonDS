@@ -32,6 +32,7 @@
 #include "Wifi.h"
 #include "AREngine.h"
 #include "Platform.h"
+#include "Slot2Cart.h"
 #include "NDSCart_SRAMManager.h"
 
 #ifdef JIT_ENABLED
@@ -808,6 +809,11 @@ bool DoSavestate(Savestate* file)
     SPI::DoSavestate(file);
     RTC::DoSavestate(file);
     Wifi::DoSavestate(file);
+    
+    if (Slot2Cart_MemExpansionPak::MemPakEnabled)
+    {
+        Slot2Cart_MemExpansionPak::DoSavestate(file);
+    }
 
     if (!file->Saving)
     {
@@ -830,6 +836,14 @@ void SetConsoleType(int type)
     ConsoleType = type;
 }
 
+void SetSlot2Addon(int type)
+{
+    Slot2Cart_RumblePak::RumblePakEnabled = (type == 1);
+    Slot2Cart_GuitarGrip::GuitarGripEnabled = (type == 2);
+    Slot2Cart_MemExpansionPak::MemPakEnabled = (type == 3);
+    Slot2Cart_SegaCardReader::Enabled = (type == 4);
+}
+  
 bool LoadROM(const u8* romdata, u32 filelength, const char *sram, bool direct)
 {
     if (NDSCart::LoadROM(romdata, filelength, sram, direct))
@@ -1979,7 +1993,7 @@ u16 ARM9Read16(u32 addr)
 
     switch (addr & 0xFF000000)
     {
-    case 0x02000000:
+    case 0x02000000:        
         return *(u16*)&MainRAM[addr & MainRAMMask];
 
     case 0x03000000:
