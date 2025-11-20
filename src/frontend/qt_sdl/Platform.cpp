@@ -577,6 +577,7 @@ static const int hotkeyMap[] = {
     HK_GuitarGripRed,
     HK_GuitarGripYellow,
     HK_GuitarGripBlue,
+    HK_MagicReaderScan,
 };
 
 bool Addon_KeyDown(KeyType type, void* userdata)
@@ -592,6 +593,11 @@ void Addon_RumbleStart(u32 len, void* userdata)
 void Addon_RumbleStop(void* userdata)
 {
     ((EmuInstance*)userdata)->inputRumbleStop();
+}
+
+int Addon_GetMagicReaderIndex(void* userdata)
+{
+    return ((EmuInstance*)userdata)->getMagicReaderIndex();
 }
 
 float Addon_MotionQuery(MotionQueryType type, void* userdata)

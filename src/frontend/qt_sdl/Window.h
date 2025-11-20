@@ -214,6 +214,8 @@ private slots:
     void onOpenInterfaceSettings();
     void onInterfaceSettingsFinished(int res);
     void onUpdateInterfaceSettings();
+    void onOpenAddonSettings();
+    void onAddonSettingsFinished(int res);
     void onChangeSavestateSRAMReloc(bool checked);
     void onChangeScreenSize();
     void onChangeScreenRotation(QAction* act);
@@ -330,6 +332,7 @@ public:
     QAction* actFirmwareSettings;
     QAction* actPathSettings;
     QAction* actInterfaceSettings;
+    QAction* actAddonSettings;
     QAction* actSavestateSRAMReloc;
     QAction* actScreenSize[4];
     QActionGroup* grpScreenRotation;

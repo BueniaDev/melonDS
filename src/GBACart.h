@@ -36,6 +36,7 @@ enum CartType
     MotionPakHomebrew = 0x203,
     MotionPakRetail = 0x204,
     GuitarGrip = 0x205,
+    MagicReader = 0x206
 };
 
 // See https://problemkaputt.de/gbatek.htm#gbacartridgeheader for details
@@ -288,6 +289,41 @@ private:
     u8 Step = 16;
 };
 
+// CartMagicReader -- Magic Reader (used in Juushinden: Ultimate Beast Battlers) (WIP)
+class CartMagicReader : public CartCommon
+{
+public:
+    CartMagicReader(void* userdata);
+    ~CartMagicReader() override;
+
+    void Reset() override;
+
+    void DoSavestate(Savestate* file) override;
+
+    u16 ROMRead(u32 addr) const override;
+
+    u8 SRAMRead(u32 addr) override;
+    void SRAMWrite(u32 addr, u8 val) override;
+
+private:
+    void* UserData;
+    u8 inData;
+    bool outData;
+    u32 state;
+
+    bool isOidReset;
+    bool prevClock;
+
+    u32 oidStatus;
+    u32 oidData;
+    u32 oidCounter;
+
+    u32 dataCounter;
+    u8 command;
+
+    void ProcessData();
+};
+
 // possible inputs for GBA carts that might accept user input
 enum
 {
@@ -297,6 +333,7 @@ enum
     Input_GuitarGripRed,
     Input_GuitarGripYellow,
     Input_GuitarGripBlue,
+    Input_MagicReaderScanCard,
 };
 
 class GBACartSlot

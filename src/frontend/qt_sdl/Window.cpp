@@ -62,6 +62,7 @@
 #include "MPSettingsDialog.h"
 #include "WifiSettingsDialog.h"
 #include "InterfaceSettingsDialog.h"
+#include "AddonSettingsDialog.h"
 #include "ROMInfoDialog.h"
 #include "RAMInfoDialog.h"
 #include "TitleManagerDialog.h"
@@ -327,6 +328,7 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
                     GBAAddon_MotionPakHomebrew,
                     GBAAddon_MotionPakRetail,
                     GBAAddon_GuitarGrip,
+                    GBAAddon_MagicReader,
                     -1
                 };
 
@@ -651,6 +653,9 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
 
             actPathSettings = menu->addAction("Path settings");
             connect(actPathSettings, &QAction::triggered, this, &MainWindow::onOpenPathSettings);
+
+            actAddonSettings = menu->addAction("Addon settings");
+            connect(actAddonSettings, &QAction::triggered, this, &MainWindow::onOpenAddonSettings);
 
             {
                 QMenu * submenu = menu->addMenu("Savestate settings");
@@ -1964,6 +1969,18 @@ void MainWindow::onPathSettingsFinished(int res)
     if (PathSettingsDialog::needsReset)
         onReset();
 
+    emuThread->emuUnpause();
+}
+
+void MainWindow::onOpenAddonSettings()
+{
+    emuThread->emuPause();
+    AddonSettingsDialog* dlg = AddonSettingsDialog::openDlg(this);
+    connect(dlg, &AddonSettingsDialog::finished, this, &MainWindow::onAddonSettingsFinished);
+}
+
+void MainWindow::onAddonSettingsFinished(int res)
+{
     emuThread->emuUnpause();
 }
 

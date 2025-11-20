@@ -395,6 +395,7 @@ enum KeyType
     KeyGuitarGripRed,
     KeyGuitarGripYellow,
     KeyGuitarGripBlue,
+    KeyMagicReaderScan,
 };
 
 // Check if a given key is being pressed.
@@ -409,6 +410,9 @@ void Addon_RumbleStart(u32 len, void* userdata);
 // Called by the DS Rumble Pak emulation to stop any necessary
 // rumble effects on the connected game controller, if available.
 void Addon_RumbleStop(void* userdata);
+
+// Called by the Magic Reader implementation to fetch the current card index.
+int Addon_GetMagicReaderIndex(void* userdata);
 
 enum MotionQueryType
 {

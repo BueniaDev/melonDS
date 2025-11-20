@@ -55,6 +55,7 @@ enum
     HK_GuitarGripRed,
     HK_GuitarGripYellow,
     HK_GuitarGripBlue,
+    HK_MagicReaderScan,
     HK_MAX
 };
 
@@ -164,6 +165,9 @@ public:
     void micStart();
     void micStop();
     int micReadInput(melonDS::s16* data, int maxlength);
+
+    // Fetch index of Magic Reader card
+    int getMagicReaderIndex();
 
     QMutex renderLock;
 

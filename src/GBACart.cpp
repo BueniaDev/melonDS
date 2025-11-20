@@ -794,6 +794,191 @@ u8 CartGuitarGrip::SRAMRead(u32 addr)
         | (Platform::Addon_KeyDown(Platform::KeyGuitarGripBlue, UserData) ? 0x08 : 0));
 }
 
+CartMagicReader::CartMagicReader(void* userdata) : 
+    CartCommon(MagicReader),
+    UserData(userdata)
+{
+}
+
+CartMagicReader::~CartMagicReader() = default;
+
+void CartMagicReader::Reset()
+{
+    inData = 0;
+    outData = 0;
+    state = 0;
+    isOidReset = false;
+    prevClock = false;
+    oidCounter = 0;
+    command = 0;
+    dataCounter = 0;
+}
+
+void CartMagicReader::DoSavestate(Savestate* file)
+{
+    CartCommon::DoSavestate(file);
+    file->Var8(&inData);
+    file->Bool32(&outData);
+    file->Var32(&state);
+    file->Bool32(&isOidReset);
+    file->Bool32(&prevClock);
+    file->Var32(&oidCounter);
+    file->Var32(&dataCounter);
+    file->Var8(&command);
+}
+
+u16 CartMagicReader::ROMRead(u32 addr) const
+{
+    return 0xFBFF;
+}
+
+u8 CartMagicReader::SRAMRead(u32 addr)
+{
+    if (addr == 0xA000000)
+    {
+        // Log(LogLevel::Info, "Reading value from MR_CNT\n");
+        return (0xFB | (outData << 2));
+    }
+
+    return 0;
+}
+
+void CartMagicReader::SRAMWrite(u32 addr, u8 val)
+{
+    if (addr == 0xA000000)
+    {
+        // Log(LogLevel::Info, "Writing value of 0x%02x to MR_CNT\n", val);
+        inData = val;
+        ProcessData();
+    }
+}
+
+void CartMagicReader::ProcessData()
+{
+    if ((inData & 0x40) != 0)
+    {
+        state = 0;
+        outData = true;
+	isOidReset = true;
+    }
+
+    bool clock = ((inData & 0x1) != 0);
+    bool data = ((inData & 0x2) != 0);
+
+    switch (state)
+    {
+    case 0:
+        if (!prevClock && clock)
+        {
+            state = 1;
+        }
+
+        outData = false;
+        break;
+    case 1:
+        if (Platform::Addon_KeyDown(Platform::KeyMagicReaderScan, UserData))
+        {
+            outData = false;
+        }
+
+        if (!data)
+        {
+            state = 2;
+        }
+
+        break;
+    case 2:
+        if (!prevClock && clock)
+        {
+            if (data)
+            {
+                state = 3;
+                command = 0;
+                dataCounter = 0;
+            }
+            else
+            {
+                state = 4;
+                oidCounter = 0;
+
+                if (isOidReset)
+                {
+                    oidStatus = 0x60FFF8;
+                    isOidReset = false;
+                }
+
+                // TODO: Finish implementing card scanning
+                if (Platform::Addon_KeyDown(Platform::KeyMagicReaderScan, UserData))
+                {
+                    oidData = (0x500000 | Platform::Addon_GetMagicReaderIndex(UserData));
+                }
+                else
+                {
+                    oidData = oidStatus;
+                }
+            }
+        }
+
+        break;
+    case 3:
+
+        if (!prevClock && clock && (dataCounter < 8))
+        {
+            if (data)
+            {
+                command |= (1 << (7 - dataCounter));
+            }
+
+            dataCounter += 1;
+        }
+        else if (!prevClock && !clock && (dataCounter == 8))
+        {
+            state = 1;
+
+            switch (command)
+            {
+            case 0x24:
+                outData = true;
+                oidStatus = 0x53FFFB;
+                break;
+            case 0x30:
+                outData = false;
+                break;
+            case 0x56:
+                outData = false;
+                oidStatus = 0x60FFF7;
+                break;
+            case 0xA3:
+                outData = true;
+                break;
+            default:
+                outData = true;
+                break;
+            }
+        }
+
+        break;
+    case 4:
+        if (!prevClock && clock && (oidCounter < 23))
+        {
+            outData = (((oidData >> (22 - oidCounter)) & 0x1) != 0);
+            oidCounter += 1;
+        }
+        else if (!prevClock && !clock && (oidCounter == 23))
+        {
+            outData = true;
+            state = 1;
+        }
+
+        break;
+    default:
+        Log(LogLevel::Info, "Unrecognized Magic Reader state of %d", state);
+        break;
+    }
+
+    prevClock = clock;
+}
+
 GBACartSlot::GBACartSlot(melonDS::NDS& nds, std::unique_ptr<CartCommon>&& cart) noexcept : NDS(nds), Cart(std::move(cart))
 {
 }
@@ -934,6 +1119,9 @@ std::unique_ptr<CartCommon> LoadAddon(int type, void* userdata)
     case GBAAddon_GuitarGrip:
         cart = std::make_unique<CartGuitarGrip>(userdata);
         break;
+    case GBAAddon_MagicReader:
+	cart = std::make_unique<CartMagicReader>(userdata);
+	break;
     default:
         Log(LogLevel::Warn, "GBACart: !! invalid addon type %d\n", type);
         return nullptr;

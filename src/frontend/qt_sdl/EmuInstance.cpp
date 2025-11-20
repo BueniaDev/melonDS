@@ -2174,6 +2174,8 @@ QString EmuInstance::gbaAddonName(int addon)
         return "Motion Pack (Retail)";
     case GBAAddon_GuitarGrip:
         return "Guitar Grip";
+    case GBAAddon_MagicReader:
+        return "Magic Reader";
     }
 
     return "???";
@@ -2199,6 +2201,11 @@ QString EmuInstance::gbaCartLabel()
     }
 
     return "(none)";
+}
+
+int EmuInstance::getMagicReaderIndex()
+{
+    return localCfg.GetInt("MagicReader.Index");
 }
 
 

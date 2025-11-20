@@ -226,6 +226,7 @@ enum
     GBAAddon_MotionPakHomebrew = 6,
     GBAAddon_MotionPakRetail = 7,
     GBAAddon_GuitarGrip = 8,
+    GBAAddon_MagicReader = 9,
 };
 
 class SPU;
