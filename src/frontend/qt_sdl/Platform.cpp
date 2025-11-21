@@ -578,6 +578,7 @@ static const int hotkeyMap[] = {
     HK_GuitarGripYellow,
     HK_GuitarGripBlue,
     HK_MagicReaderScan,
+    HK_HCV1000Scan,
 };
 
 bool Addon_KeyDown(KeyType type, void* userdata)
@@ -598,6 +599,11 @@ void Addon_RumbleStop(void* userdata)
 int Addon_GetMagicReaderIndex(void* userdata)
 {
     return ((EmuInstance*)userdata)->getMagicReaderIndex();
+}
+
+std::string Addon_GetHCV1000Barcode(void* userdata)
+{
+    return ((EmuInstance*)userdata)->getHCV1000Barcode();
 }
 
 float Addon_MotionQuery(MotionQueryType type, void* userdata)

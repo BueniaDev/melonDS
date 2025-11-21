@@ -227,6 +227,7 @@ enum
     GBAAddon_MotionPakRetail = 7,
     GBAAddon_GuitarGrip = 8,
     GBAAddon_MagicReader = 9,
+    GBAAddon_HCV1000 = 10,
 };
 
 class SPU;

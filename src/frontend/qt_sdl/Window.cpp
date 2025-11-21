@@ -329,6 +329,7 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
                     GBAAddon_MotionPakRetail,
                     GBAAddon_GuitarGrip,
                     GBAAddon_MagicReader,
+                    GBAAddon_HCV1000,
                     -1
                 };
 

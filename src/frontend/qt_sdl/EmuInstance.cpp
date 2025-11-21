@@ -2176,6 +2176,8 @@ QString EmuInstance::gbaAddonName(int addon)
         return "Guitar Grip";
     case GBAAddon_MagicReader:
         return "Magic Reader";
+    case GBAAddon_HCV1000:
+        return "HCV-1000 (Sega Card Reader)";
     }
 
     return "???";
@@ -2206,6 +2208,11 @@ QString EmuInstance::gbaCartLabel()
 int EmuInstance::getMagicReaderIndex()
 {
     return localCfg.GetInt("MagicReader.Index");
+}
+
+std::string EmuInstance::getHCV1000Barcode()
+{
+    return localCfg.GetQString("HCV1000.Barcode").toStdString();
 }
 
 

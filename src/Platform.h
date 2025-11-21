@@ -396,6 +396,7 @@ enum KeyType
     KeyGuitarGripYellow,
     KeyGuitarGripBlue,
     KeyMagicReaderScan,
+    KeyHCV1000Scan,
 };
 
 // Check if a given key is being pressed.
@@ -413,6 +414,9 @@ void Addon_RumbleStop(void* userdata);
 
 // Called by the Magic Reader implementation to fetch the current card index.
 int Addon_GetMagicReaderIndex(void* userdata);
+
+// Called by the HCV-1000 implementation to fetch the current barcode string
+std::string Addon_GetHCV1000Barcode(void* userdata);
 
 enum MotionQueryType
 {

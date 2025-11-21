@@ -907,7 +907,6 @@ void CartMagicReader::ProcessData()
                     isOidReset = false;
                 }
 
-                // TODO: Finish implementing card scanning
                 if (Platform::Addon_KeyDown(Platform::KeyMagicReaderScan, UserData))
                 {
                     oidData = (0x500000 | Platform::Addon_GetMagicReaderIndex(UserData));
@@ -921,7 +920,6 @@ void CartMagicReader::ProcessData()
 
         break;
     case 3:
-
         if (!prevClock && clock && (dataCounter < 8))
         {
             if (data)
@@ -977,6 +975,104 @@ void CartMagicReader::ProcessData()
     }
 
     prevClock = clock;
+}
+
+CartHCV1000::CartHCV1000(void* userdata) :
+    CartCommon(HCV1000),
+    UserData(userdata)
+{
+}
+
+CartHCV1000::~CartHCV1000() = default;
+
+void CartHCV1000::Reset()
+{
+    isScanning = false;
+    isCameraStatus = false;
+    isScanInProgress = false;
+
+    for (size_t i = 0; i < 16; i++)
+    {
+        barcode[i] = 0x5F;
+    }
+}
+
+void CartHCV1000::DoSavestate(Savestate* file)
+{
+    CartCommon::DoSavestate(file);
+    file->Bool32(&isScanning);
+    file->Bool32(&isCameraStatus);
+    file->Bool32(&isScanInProgress);
+    file->VarArray(barcode, 16);
+}
+
+u16 CartHCV1000::ROMRead(u32 addr) const
+{
+    return 0xFDFF;
+}
+
+u8 CartHCV1000::SRAMRead(u32 addr)
+{
+    if (addr == 0xA000000)
+    {
+        // Log(LogLevel::Info, "Reading from HCV_CNT register\n");
+        return ReadHCVCnt();
+    }
+    else if ((addr >= 0xA000010) && (addr <= 0xA00001F))
+    {
+        return barcode[(addr & 0xF)];
+    }
+
+    return 0;
+}
+
+void CartHCV1000::SRAMWrite(u32 addr, u8 val)
+{
+    if (addr == 0xA000000)
+    {
+        WriteHCVCnt(val);
+    }
+}
+
+u8 CartHCV1000::ReadHCVCnt()
+{
+    ProcessHCVScan();
+    return ((isScanInProgress << 7) | isCameraStatus);
+}
+
+void CartHCV1000::ProcessHCVScan()
+{
+    if (Platform::Addon_KeyDown(Platform::KeyHCV1000Scan, UserData))
+    {
+        std::string text = Platform::Addon_GetHCV1000Barcode(UserData);
+
+        for (size_t i = 0; i < text.size(); i++)
+        {
+            if (i >= 16)
+            {
+                break;
+            }
+
+            barcode[i] = text.at(i);
+        }
+
+        isScanInProgress = false;
+    }
+}
+
+void CartHCV1000::WriteHCVCnt(u8 val)
+{
+    isScanning = ((val & 0x80) != 0);
+    isCameraStatus = ((val & 0x1) != 0);
+
+    if (isScanning && isCameraStatus)
+    {
+        isScanInProgress = true;
+    }
+    else
+    {
+        isScanInProgress = false;
+    }
 }
 
 GBACartSlot::GBACartSlot(melonDS::NDS& nds, std::unique_ptr<CartCommon>&& cart) noexcept : NDS(nds), Cart(std::move(cart))
@@ -1122,6 +1218,9 @@ std::unique_ptr<CartCommon> LoadAddon(int type, void* userdata)
     case GBAAddon_MagicReader:
 	cart = std::make_unique<CartMagicReader>(userdata);
 	break;
+    case GBAAddon_HCV1000:
+        cart = std::make_unique<CartHCV1000>(userdata);
+        break;
     default:
         Log(LogLevel::Warn, "GBACart: !! invalid addon type %d\n", type);
         return nullptr;

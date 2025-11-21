@@ -36,7 +36,8 @@ enum CartType
     MotionPakHomebrew = 0x203,
     MotionPakRetail = 0x204,
     GuitarGrip = 0x205,
-    MagicReader = 0x206
+    MagicReader = 0x206,
+    HCV1000 = 0x207,
 };
 
 // See https://problemkaputt.de/gbatek.htm#gbacartridgeheader for details
@@ -289,7 +290,7 @@ private:
     u8 Step = 16;
 };
 
-// CartMagicReader -- Magic Reader (used in Juushinden: Ultimate Beast Battlers) (WIP)
+// CartMagicReader -- Magic Reader (used in Juushinden: Ultimate Beast Battlers)
 class CartMagicReader : public CartCommon
 {
 public:
@@ -324,6 +325,38 @@ private:
     void ProcessData();
 };
 
+// CartHCV1000 -- HCV-1000 (Sega Card Reader) (used in Card de Asobu, Osharo Majo Love and Berry: DS Collection and Kouchuu Ouja Mushiking Super Collection) (WIP)
+class CartHCV1000 : public CartCommon
+{
+public:
+    CartHCV1000(void* userdata);
+    ~CartHCV1000() override;
+
+    void Reset() override;
+
+    void DoSavestate(Savestate* file) override;
+
+    u16 ROMRead(u32 addr) const override;
+
+    u8 SRAMRead(u32 addr) override;
+    void SRAMWrite(u32 addr, u8 val) override;
+
+private:
+    void* UserData;
+
+    u8 ReadHCVCnt();
+    void WriteHCVCnt(u8 val);
+
+    void ProcessHCVScan();
+
+    bool isScanning;
+    bool isCameraStatus;
+
+    bool isScanInProgress;
+
+    u8 barcode[16];
+};
+
 // possible inputs for GBA carts that might accept user input
 enum
 {
@@ -334,6 +367,7 @@ enum
     Input_GuitarGripYellow,
     Input_GuitarGripBlue,
     Input_MagicReaderScanCard,
+    Input_HCV1000ScanCard,
 };
 
 class GBACartSlot

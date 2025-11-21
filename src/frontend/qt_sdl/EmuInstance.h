@@ -56,6 +56,7 @@ enum
     HK_GuitarGripYellow,
     HK_GuitarGripBlue,
     HK_MagicReaderScan,
+    HK_HCV1000Scan,
     HK_MAX
 };
 
@@ -168,6 +169,9 @@ public:
 
     // Fetch index of Magic Reader card
     int getMagicReaderIndex();
+
+    // Fetch HCV-1000 barcode
+    std::string getHCV1000Barcode();
 
     QMutex renderLock;
 

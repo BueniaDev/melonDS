@@ -41,11 +41,14 @@ AddonSettingsDialog::AddonSettingsDialog(QWidget* parent) : QDialog(parent), ui(
     auto& cfg = emuInstance->getLocalConfig();
     ui->sBxMagicReader->setValue(cfg.GetInt("MagicReader.Index"));
 
+    ui->txtHCV1000Barcode->setText(cfg.GetQString("HCV1000.Barcode"));
+
 #define SET_ORIGVAL(type, val) \
     for (type* w : findChildren<type*>(nullptr)) \
         w->setProperty("user_originalValue", w->val());
 
     SET_ORIGVAL(QSpinBox, value);
+    SET_ORIGVAL(QLineEdit, text);
 
 #undef SET_ORIGVAL
 }
@@ -80,11 +83,13 @@ void AddonSettingsDialog::done(int r)
         }
 
         CHECK_ORIGVAL(QSpinBox, value);
+        CHECK_ORIGVAL(QLineEdit, text);
 
         if (modified)
         {
             auto& cfg = emuInstance->getLocalConfig();
             cfg.SetInt("MagicReader.Index", ui->sBxMagicReader->value());
+            cfg.SetQString("HCV1000.Barcode", ui->txtHCV1000Barcode->text());
 
             Config::Save();
         }
