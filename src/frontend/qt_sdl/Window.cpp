@@ -1,5 +1,5 @@
 /*
-    Copyright 2016-2025 melonDS team
+    Copyright 2016-2026 melonDS team
 
     This file is part of melonDS.
 
@@ -751,8 +751,6 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
         actROMInfo->setEnabled(false);
         actRAMInfo->setEnabled(false);
 
-        actSavestateSRAMReloc->setChecked(globalCfg.GetBool("Savestate.RelocSRAM"));
-
         actScreenRotation[windowCfg.GetInt("ScreenRotation")]->setChecked(true);
 
         int screenGap = windowCfg.GetInt("ScreenGap");
@@ -864,8 +862,9 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::createScreenPanel()
 {
-    if (panel) delete panel;
+    auto oldpanel = panel;
     panel = nullptr;
+    if (oldpanel) delete oldpanel;
 
     hasOGL = globalCfg.GetBool("Screen.UseGL") ||
             (globalCfg.GetInt("3D.Renderer") != renderer3D_Software);
@@ -968,13 +967,10 @@ void MainWindow::releaseGL()
     return glpanel->releaseGL();
 }
 
-void MainWindow::drawScreenGL()
+void MainWindow::drawScreen()
 {
-    if (!hasOGL) return;
-
-    ScreenPanelGL* glpanel = static_cast<ScreenPanelGL*>(panel);
-    if (!glpanel) return;
-    return glpanel->drawScreenGL();
+    if (!panel) return;
+    return panel->drawScreen();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
@@ -1079,7 +1075,7 @@ void MainWindow::onFocusIn()
 {
     focused = true;
     if (emuInstance)
-        emuInstance->audioMute();
+        emuInstance->updateAudioMuteByWindowFocus();
 }
 
 void MainWindow::onFocusOut()
@@ -1088,7 +1084,7 @@ void MainWindow::onFocusOut()
     // prevent use after free
     focused = false;
     if (emuInstance)
-        emuInstance->audioMute();
+        emuInstance->updateAudioMuteByWindowFocus();
 }
 
 void MainWindow::onAppStateChanged(Qt::ApplicationState state)
@@ -1122,7 +1118,7 @@ bool MainWindow::preloadROMs(QStringList file, QStringList gbafile, bool boot)
 {
     QString errorstr;
 
-    if (file.isEmpty() && gbafile.isEmpty())
+    if (file.isEmpty() && gbafile.isEmpty() && !boot)
         return false;
 
     if (!verifySetup())
@@ -1161,7 +1157,7 @@ bool MainWindow::preloadROMs(QStringList file, QStringList gbafile, bool boot)
                 return false;
             }
         }
-        
+
         recentFileList.removeAll(file.join("|"));
         recentFileList.prepend(file.join("|"));
         updateRecentFilesMenu();
@@ -2022,7 +2018,7 @@ void MainWindow::onOpenMPSettings()
 void MainWindow::onMPSettingsFinished(int res)
 {
     emuInstance->mpAudioMode = globalCfg.GetInt("MP.AudioMode");
-    emuInstance->audioMute();
+    emuInstance->updateAudioMuteByWindowFocus();
     MPInterface::Get().SetRecvTimeout(globalCfg.GetInt("MP.RecvTimeout"));
 
     emuThread->emuUnpause();
@@ -2065,11 +2061,6 @@ void MainWindow::onUpdateInterfaceSettings()
 void MainWindow::onInterfaceSettingsFinished(int res)
 {
     emuThread->emuUnpause();
-}
-
-void MainWindow::onChangeSavestateSRAMReloc(bool checked)
-{
-    globalCfg.SetBool("Savestate.RelocSRAM", checked);
 }
 
 void MainWindow::onChangeScreenSize()
@@ -2256,7 +2247,13 @@ void MainWindow::onScreenEmphasisToggled()
     {
         currentSizing = screenSizing_EmphTop;
     }
+    else
+    {
+        // For any other sizing mode, switch to EmphTop as a sensible default
+        currentSizing = screenSizing_EmphTop;
+    }
     windowCfg.SetInt("ScreenSizing", currentSizing);
+    actScreenSizing[currentSizing]->setChecked(true);
 
     emit screenLayoutChange();
 }
