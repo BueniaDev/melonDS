@@ -658,14 +658,6 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
             actAddonSettings = menu->addAction("Addon settings");
             connect(actAddonSettings, &QAction::triggered, this, &MainWindow::onOpenAddonSettings);
 
-            {
-                QMenu * submenu = menu->addMenu("Savestate settings");
-
-                actSavestateSRAMReloc = submenu->addAction("Separate savefiles");
-                actSavestateSRAMReloc->setCheckable(true);
-                connect(actSavestateSRAMReloc, &QAction::triggered, this, &MainWindow::onChangeSavestateSRAMReloc);
-            }
-
             menu->addSeparator();
 
             actLimitFramerate = menu->addAction("Limit framerate");

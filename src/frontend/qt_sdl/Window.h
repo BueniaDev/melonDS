@@ -160,7 +160,6 @@ private slots:
     void onUpdateInterfaceSettings();
     void onOpenAddonSettings();
     void onAddonSettingsFinished(int res);
-    void onChangeSavestateSRAMReloc(bool checked);
     void onChangeScreenSize();
     void onChangeScreenRotation(QAction* act);
     void onChangeScreenGap(QAction* act);

@@ -93,6 +93,7 @@ public:
     virtual void ROMCommandFinish(const u8* cmd, u8* data, u32 len);
 
     virtual u8 SPIWrite(u8 val, u32 pos, bool last);
+    virtual bool IsIRQ();
 
     virtual u8* GetSaveMemory() { return nullptr; }
     virtual const u8* GetSaveMemory() const { return nullptr; }
@@ -235,7 +236,7 @@ private:
     u8 IRCmd = 0;
 };
 
-// CartRetailBT - Pok�mon Typing Adventure (SPI BT controller)
+// CartRetailBT - Pok mon Typing Adventure (SPI BT controller)
 class CartRetailBT : public CartRetail
 {
 public:
@@ -244,6 +245,27 @@ public:
     ~CartRetailBT() override;
 
     u8 SPIWrite(u8 val, u32 pos, bool last) override;
+    bool IsIRQ() override;
+
+private:
+    bool isInterrupt = false;
+
+    bool isCommandSend = false;
+
+    u8 BTCmd[2] = {0, 0};
+
+    u8 PacketData[257];
+
+    u8 RespData[257];
+
+    u16 RespSize = 0;
+    u16 RespPtr = 0;
+
+    void ProcessBTCommand();
+
+    void AppendRespByte(u8 val);
+
+    void AppendCommandComplete(u16 opcode, u8 bytes[], u32 len);
 };
 
 // CartSD -- any 'cart' with an SD card slot

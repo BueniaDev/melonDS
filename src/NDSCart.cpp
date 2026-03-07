@@ -370,6 +370,11 @@ u8 CartCommon::SPIWrite(u8 val, u32 pos, bool last)
     return 0xFF;
 }
 
+bool CartCommon::IsIRQ()
+{
+    return false;
+}
+
 void CartCommon::ReadROM(u32 addr, u32 len, u8* data, u32 offset) const
 {
     if (addr >= ROMLength) return;
@@ -1169,9 +1174,346 @@ u8 CartRetailBT::SPIWrite(u8 val, u32 pos, bool last)
     }
     if(pos==7)SetIRQ();*/
 
+    // TODO: Finish implementing the actual logic
+
+    if ((pos == 0) && (val == 0xFF))
+    {
+        Log(LogLevel::Info, "Command initialized\n");
+
+        for (int i = 0; i < 257; i++)
+        {
+            RespData[i] = 0;
+        }
+
+        RespSize = 0;
+        isInterrupt = true;
+        return 0;
+    }
+    else if (pos < 2)
+    {
+        BTCmd[pos] = val;
+        return 0;
+    }
+
+    if ((BTCmd[0] == 0x01) && (BTCmd[1] == 0x00))
+    {
+        // Log(LogLevel::Info, "Setting packet data byte at %d to 0x%02x\n", (pos - 2), val);
+        PacketData[pos - 2] = val;
+
+        if (last)
+        {
+            ProcessBTCommand();
+            isInterrupt = true;
+        }
+
+        return 0;
+    }
+    else if ((BTCmd[0] == 0x02) && (BTCmd[1] == 0x00))
+    {
+        // Log(LogLevel::Info, "Receiving data and/or events...\n");
+
+        u8 data = 0;
+
+        if (pos < 4)
+        {
+            data = (pos == 2) ? (RespSize >> 8) : (RespSize & 0xFF);
+        }
+        else if (RespSize > 0)
+        {
+            data = RespData[RespPtr++];
+
+            if (RespPtr == RespSize)
+            {
+                RespPtr = 0;
+                RespSize = 0;
+            }
+        }
+
+        return data;
+    }
+
     return 0;
 }
 
+void CartRetailBT::AppendRespByte(u8 val)
+{
+    if (RespSize >= 257)
+    {
+        Log(LogLevel::Info, "Response data overflow\n");
+        return;
+    }
+
+    RespData[RespSize++] = val;
+}
+
+void CartRetailBT::AppendCommandComplete(u16 opcode, u8 bytes[], u32 len)
+{
+    if (len >= 253)
+    {
+        return;
+    }
+
+    u8 bytes_len = (len & 0xFF);
+
+    AppendRespByte(0x04);
+    AppendRespByte(0x0E);
+    AppendRespByte(bytes_len + 3);
+    AppendRespByte(0x01);
+    AppendRespByte((opcode & 0xFF));
+    AppendRespByte((opcode >> 8));
+
+    for (u8 i = 0; i < bytes_len; i++)
+    {
+        AppendRespByte(bytes[i]);
+    }
+}
+
+void CartRetailBT::ProcessBTCommand()
+{
+    u16 length = ((PacketData[0] << 8) | PacketData[1]);
+    u8 indicator = PacketData[2];
+
+    u16 opcode = ((PacketData[4] << 8) | PacketData[3]);
+
+    u8 paramLength = PacketData[5];
+
+    u8 ogf = ((opcode >> 10) & 0x3F);
+    u16 ocf = (opcode & 0x3FF);
+
+    Log(LogLevel::Info, "Indicator: 0x%02x, OGF: 0x%02x, OCF: 0x%04x\n", indicator, ogf, ocf);
+
+    switch (indicator)
+    {
+    case 0x01:
+    {
+        switch (opcode)
+        {
+        case 0x0C01:
+        {
+            Log(LogLevel::Info, "HCI_Set_Event_Mask\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C03:
+        {
+            Log(LogLevel::Info, "HCI_Reset\n");
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C13:
+        {
+            Log(LogLevel::Info, "HCI_Write_Local_Name\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C18:
+        {
+            Log(LogLevel::Info, "HCI_Write_Page_Timeout\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C24:
+        {
+            Log(LogLevel::Info, "HCI_Write_Class_of_Device\n");
+            u32 classDevice = ((PacketData[6] << 16) | (PacketData[7] << 8) | PacketData[8]);
+            Log(LogLevel::Info, "Setting class of device to 0x%06x\n", classDevice);
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+	case 0x0C33:
+        {
+            Log(LogLevel::Info, "HCI_Host_Buffer_Size\n");
+
+            // TODO: Display parameters of this command
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C43:
+        {
+            Log(LogLevel::Info, "HCI_Write_Inquiry_Scan_Type\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C45:
+        {
+            Log(LogLevel::Info, "HCI_Write_Inquiry_Mode\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C47:
+        {
+            Log(LogLevel::Info, "HCI_Write_Page_Scan_Type\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C49:
+        {
+            Log(LogLevel::Info, "HCI_Write_AFH_Channel_Assessment_Mode\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C52:
+        {
+            Log(LogLevel::Info, "HCI_Write_Extended_Inquiry_Response\n");
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x0C56:
+        {
+            Log(LogLevel::Info, "HCI_Write_Simple_Pairing_Mode\n");
+
+            u8 param = PacketData[6];
+
+            if (param == 0x01)
+            {
+                Log(LogLevel::Info, "Simple pairing enabled\n");
+            }
+            else if (param == 0x00)
+            {
+                Log(LogLevel::Info, "Simple pairing disabled\n");
+            }
+
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+        }
+        break;
+        case 0x1001:
+        {
+            Log(LogLevel::Info, "HCI_Read_Local_Version_Information\n");
+            u8 resp[9] = {0x00, 0x04, 0x17, 0x02, 0x04, 0x0F, 0x00, 0x20, 0x41};
+            AppendCommandComplete(opcode, resp, 9);
+        }
+        break;
+        case 0x1003:
+        {
+            Log(LogLevel::Info, "HCI_Read_Local_Supported_Features\n");
+            u8 resp[9] = {0x00, 0xFF, 0xFF, 0x8F, 0xFE, 0x9B, 0xFF, 0x79, 0x83};
+            AppendCommandComplete(opcode, resp, 9);
+        }
+        break;
+        case 0x1005:
+        {
+            Log(LogLevel::Info, "HCI_Read_Buffer_Size\n");
+            u8 resp[8] = {0x00, 0xFD, 0x03, 0x40, 0x08, 0x00, 0x01, 0x00};
+            AppendCommandComplete(opcode, resp, 8);
+        }
+        break;
+        case 0x1009:
+        {
+            Log(LogLevel::Info, "HCI_Read_BD_ADDR\n");
+            u8 resp[7] = {0x00, 0x0D, 0x48, 0xB5, 0xA3, 0xBD, 0x58};
+            AppendCommandComplete(opcode, resp, 7);
+        }
+        break;
+	case 0xFC4C:
+	case 0xFCEC:
+	{
+            // TODO: Properly implement this command
+            Log(LogLevel::Info, "HCI_Write_Flash\n");
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+	}
+	break;
+	case 0xFC4D:
+	case 0xFCED:
+	{
+            // TODO: Properly implement this command
+            Log(LogLevel::Info, "HCI_Read_Flash\n");
+	    u32 addr = ((PacketData[9] << 24) | (PacketData[8] << 16) | (PacketData[7] << 8) | PacketData[6]);
+            u8 size = PacketData[10];
+
+            Log(LogLevel::Info, "Reading %d bytes from Flash RAM address of 0x%08x\n", size, addr);
+
+            if (size > 251)
+            {
+                Log(LogLevel::Info, "Invalid RAM read size\n");
+                return;
+            }
+
+            u8 resp[size];
+            AppendCommandComplete(opcode, resp, size);
+	}
+	break;
+        case 0xFC6E:
+        {
+            Log(LogLevel::Info, "HCI_Read_Controller_Features\n");
+            u8 resp[9] = {0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+            AppendCommandComplete(opcode, resp, 9);
+        }
+        break;
+        case 0xFC79:
+        {
+            Log(LogLevel::Info, "HCI_Write_Inquiry_Scan_Type\n");
+            u8 resp[7] = {0x00, 0x13, 0x11, 0x15, 0x02, 0x17, 0x02};
+            AppendCommandComplete(opcode, resp, 7);
+        }
+        break;
+	case 0xFF5E:
+	case 0xFCEE:
+	{
+            Log(LogLevel::Info, "HCI_Sector_Erase\n");
+            u8 resp[1] = {0x00};
+            AppendCommandComplete(opcode, resp, 1);
+	}
+	break;
+        default:
+        {
+            Log(LogLevel::Info, "Unrecognized BT command of 0x%04x\n", opcode);
+            Log(LogLevel::Info, "Parameter length: %d bytes\n", paramLength);
+
+            Log(LogLevel::Info, "Parameter bytes: {");
+
+            for (u8 i = 0; i < paramLength; i++)
+            {
+                if (i > 0)
+                {
+                    Log(LogLevel::Info, ", ");
+                }
+
+                Log(LogLevel::Info, "0x%02x", PacketData[6 + i]);
+            }
+
+            Log(LogLevel::Info, "}\n");
+        }
+        break;
+        }
+    }
+    break;
+    
+    }
+}
+
+bool CartRetailBT::IsIRQ()
+{
+    if (isInterrupt)
+    {
+        isInterrupt = false;
+        return true;
+    }
+
+    return false;
+}
 
 CartSD::CartSD(const u8* rom, u32 len, u32 chipid, ROMListEntry romparams, void* userdata, std::optional<FATStorage>&& sdcard) :
     CartSD(CopyToUnique(rom, len), len, chipid, romparams, userdata, std::move(sdcard))
@@ -1724,6 +2066,8 @@ std::unique_ptr<CartCommon> ParseROM(std::unique_ptr<u8[]>&& romdata, u32 romlen
         cart = std::make_unique<CartRetailIR>(std::move(cartrom), cartromsize, cartid, irversion, badDSiDump, romparams, std::move(sram), sramlen, userdata);
     else if ((gamecode & 0xFFFFFF) == 0x505A55) // UZPx
         cart = std::make_unique<CartRetailBT>(std::move(cartrom), cartromsize, cartid, romparams, std::move(sram), sramlen, userdata);
+    else if (gamecode == 0x4A435A55) // UZCJ
+        cart = std::make_unique<CartRetailBT>(std::move(cartrom), cartromsize, cartid, romparams, std::move(sram), sramlen, userdata);
     else
         cart = std::make_unique<CartRetail>(std::move(cartrom), cartromsize, cartid, badDSiDump, romparams, std::move(sram), sramlen, userdata);
 
@@ -2064,6 +2408,15 @@ void NDSCartSlot::WriteSPIData(u8 val) noexcept
 
     if (Cart) SPIData = Cart->SPIWrite(val, SPIDataPos, islast);
     else      SPIData = 0;
+
+    if (Cart)
+    {
+        if (Cart->IsIRQ())
+        {
+            NDS.SetIRQ(0, IRQ_CartIREQMC);
+            NDS.SetIRQ(1, IRQ_CartIREQMC);
+        }
+    }
 
     // SPI transfers one bit per cycle -> 8 cycles per byte
     u32 delay = 8 * (8 << (SPICnt & 0x3));
