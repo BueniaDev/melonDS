@@ -94,6 +94,7 @@ public:
 
     virtual u8 SPIWrite(u8 val, u32 pos, bool last);
     virtual bool IsIRQ();
+    virtual bool IsDebug();
 
     virtual u8* GetSaveMemory() { return nullptr; }
     virtual const u8* GetSaveMemory() const { return nullptr; }
@@ -236,9 +237,21 @@ private:
     u8 IRCmd = 0;
 };
 
-// CartRetailBT - Pok mon Typing Adventure (SPI BT controller)
+// CartRetailBT - Pokemon Typing Adventure (SPI BT controller) (WIP)
+
+enum CartBTState
+{
+    Waiting,
+    Starting,
+    CommandLength,
+    CommandData,
+    EventLength,
+    EventData
+};
+
 class CartRetailBT : public CartRetail
 {
+
 public:
     CartRetailBT(const u8* rom, u32 len, u32 chipid, ROMListEntry romparams, std::unique_ptr<u8[]>&& sram, u32 sramlen, void* userdata);
     CartRetailBT(std::unique_ptr<u8[]>&& rom, u32 len, u32 chipid, ROMListEntry romparams, std::unique_ptr<u8[]>&& sram, u32 sramlen, void* userdata);
@@ -246,26 +259,30 @@ public:
 
     u8 SPIWrite(u8 val, u32 pos, bool last) override;
     bool IsIRQ() override;
+    bool IsDebug() override;
 
 private:
     bool isInterrupt = false;
+    bool isDebug = false;
 
-    bool isCommandSend = false;
+    CartBTState currentState = Waiting;
 
-    u8 BTCmd[2] = {0, 0};
+    u8 BtCmd[2] = {0, 0};
+    u16 CmdLength = 0;
 
-    u8 PacketData[257];
+    u8 CmdData[257];
+    u16 CmdPtr = 0;
 
-    u8 RespData[257];
-
-    u16 RespSize = 0;
+    u8 RespData[1023];
     u16 RespPtr = 0;
+    u16 RespLen = 0;
+
+    void AppendRespByte(u8 val);
+    void AppendCommandComplete(u16 opcode, u8 data[], u32 len);
 
     void ProcessBTCommand();
 
-    void AppendRespByte(u8 val);
-
-    void AppendCommandComplete(u16 opcode, u8 bytes[], u32 len);
+    u8 inquiryMode = 0;
 };
 
 // CartSD -- any 'cart' with an SD card slot
