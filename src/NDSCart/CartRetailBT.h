@@ -47,11 +47,11 @@ public:
 
 private:
     bool isInterrupt = false;
-    bool isDebug = false;
 
     CartBTState currentState = Waiting;
 
-    u8 BtCmd[2] = {0, 0};
+    u16 BtCmd = 0;
+    bool isBtMsb = false;
     u16 CmdLength = 0;
 
     u8 CmdData[257];

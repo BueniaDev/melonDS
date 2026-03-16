@@ -73,6 +73,8 @@ public:
     virtual void SPIRelease() { SPISelected = false; };
     virtual u8 SPITransmitReceive(u8 val) { return 0xFF; }
 
+    virtual bool IsIRQ() { return false; }
+
     virtual u8* GetSaveMemory() { return nullptr; }
     virtual const u8* GetSaveMemory() const { return nullptr; }
     virtual u32 GetSaveMemoryLength() const { return 0; }

@@ -52,9 +52,11 @@ u8 CartRetailBT::SPITransmitReceive(u8 val)
     // The official Bluetooth v2.1 + EDR specification (which the Bluetooth controller in this cart uses;
     // can be found on official Bluetooth website)
 
+    // TODO: Finish (WIP) implementation
+
     //Log(LogLevel::Debug,"POKETYPE SPI: %02X %d %d - %08X\n", val, pos, last, NDS::GetPC(0));
 
-    //Log(LogLevel::Info,"POKETYPE SPI: %02X %d %d\n", val, pos, last);
+    // Log(LogLevel::Info,"POKETYPE SPI: %02X\n", val);
 
     switch (currentState)
     {
@@ -72,20 +74,25 @@ u8 CartRetailBT::SPITransmitReceive(u8 val)
     break;
     case Starting:
     {
-        BtCmd[pos] = val;
-
-        if (pos == 1)
+        if (isBtMsb)
         {
-            u16 cmd = ((BtCmd[0] << 8) | BtCmd[1]);
+            BtCmd |= val;
 
-            if (cmd == 0x0100)
+            if (BtCmd == 0x0100)
             {
                 currentState = CommandLength;
             }
-            else if (cmd == 0x0200)
+            else if (BtCmd == 0x0200)
             {
                 currentState = EventLength;
             }
+
+            isBtMsb = false;
+        }
+        else
+        {
+            BtCmd = (val << 8);
+            isBtMsb = true;
         }
 
         return 0;
@@ -93,15 +100,17 @@ u8 CartRetailBT::SPITransmitReceive(u8 val)
     break;
     case CommandLength:
     {
-        if (pos == 2)
+        if (!isBtMsb)
         {
-            CmdLength = ((val << 8));
+            CmdLength = (val << 8);
+            isBtMsb = true;
         }
-        else if (pos == 3)
+        else
         {
             CmdLength |= val;
             CmdPtr = 0;
             currentState = CommandData;
+            isBtMsb = false;
         }
 
         return 0;
@@ -111,7 +120,7 @@ u8 CartRetailBT::SPITransmitReceive(u8 val)
     {
         CmdData[CmdPtr++] = val;
 
-        if ((CmdPtr == CmdLength) && last)
+        if (CmdPtr == CmdLength)
         {
             RespLen = 0;
 
@@ -133,12 +142,14 @@ u8 CartRetailBT::SPITransmitReceive(u8 val)
     break;
     case EventLength:
     {
-        if (pos == 2)
+        if (!isBtMsb)
         {
+            isBtMsb = true;
             return (RespLen >> 8);
         }
-        else if (pos == 3)
+        else
         {
+            isBtMsb = false;
             RespPtr = 0;
             currentState = (RespLen == 0) ? Waiting : EventData;
             return (RespLen & 0xFF);
