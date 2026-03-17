@@ -175,6 +175,9 @@ public:
     // Fetch HCV-1000 barcode
     std::string getHCV1000Barcode();
 
+    // Fetch number of steps on Ubisoft Thrustmaster Pedometer
+    int getUbisoftPedometerIndex();
+
     QMutex renderLock;
 
 private:

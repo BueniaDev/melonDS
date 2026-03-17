@@ -606,6 +606,11 @@ std::string Addon_GetHCV1000Barcode(void* userdata)
     return ((EmuInstance*)userdata)->getHCV1000Barcode();
 }
 
+int Addon_GetUbisoftPedometerIndex(void* userdata)
+{
+    return ((EmuInstance*)userdata)->getUbisoftPedometerIndex();
+}
+
 float Addon_MotionQuery(MotionQueryType type, void* userdata)
 {
     return ((EmuInstance*)userdata)->inputMotionQuery(type);

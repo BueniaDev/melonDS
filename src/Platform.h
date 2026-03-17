@@ -412,11 +412,14 @@ void Addon_RumbleStart(u32 len, void* userdata);
 // rumble effects on the connected game controller, if available.
 void Addon_RumbleStop(void* userdata);
 
-// Called by the Magic Reader implementation to fetch the current card index.
+// Called by the Magic Reader implementation to fetch the current card index
 int Addon_GetMagicReaderIndex(void* userdata);
 
 // Called by the HCV-1000 implementation to fetch the current barcode string
 std::string Addon_GetHCV1000Barcode(void* userdata);
+
+// Called by the Ubisoft Thrustmaster Pedometer implementation to fetch the current number of steps
+int Addon_GetUbisoftPedometerIndex(void* userdata);
 
 enum MotionQueryType
 {

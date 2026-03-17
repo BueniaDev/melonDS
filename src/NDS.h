@@ -237,6 +237,7 @@ enum
     GBAAddon_GuitarGrip = 8,
     GBAAddon_MagicReader = 9,
     GBAAddon_HCV1000 = 10,
+    GBAAddon_UbisoftPedometer = 11,
 };
 
 class SPU;

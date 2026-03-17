@@ -38,6 +38,7 @@ enum CartType
     GuitarGrip = 0x205,
     MagicReader = 0x206,
     HCV1000 = 0x207,
+    UbisoftPedometer = 0x208
 };
 
 // See https://problemkaputt.de/gbatek.htm#gbacartridgeheader for details
@@ -249,6 +250,25 @@ public:
 
 private:
     void* UserData;
+};
+
+// CartUbisoftPedometer (Used in My Weight Loss Coach and My Health Coach: Manage Your Weight)
+class CartUbisoftPedometer : public CartCommon
+{
+public:
+    CartUbisoftPedometer(void* userdata);
+    ~CartUbisoftPedometer() override;
+
+    void Reset() override;
+
+    void DoSavestate(Savestate* file) override;
+
+    u16 ROMRead(u32 addr) const override;
+    u8 SRAMRead(u32 addr) override;
+
+private:
+    void* UserData;
+    u32 NumSteps = 0;
 };
 
 // CartMotionPakHomebrew -- DS Motion Pak (Homebrew)

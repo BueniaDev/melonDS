@@ -794,6 +794,76 @@ u8 CartGuitarGrip::SRAMRead(u32 addr)
         | (Platform::Addon_KeyDown(Platform::KeyGuitarGripBlue, UserData) ? 0x08 : 0));
 }
 
+CartUbisoftPedometer::CartUbisoftPedometer(void* userdata) : 
+    CartCommon(UbisoftPedometer),
+    UserData(userdata)
+{
+}
+
+CartUbisoftPedometer::~CartUbisoftPedometer() = default;
+
+void CartUbisoftPedometer::Reset()
+{
+    NumSteps = 0;
+}
+
+void CartUbisoftPedometer::DoSavestate(Savestate* file)
+{
+    CartCommon::DoSavestate(file);
+    file->Var32(&NumSteps);
+}
+
+u16 CartUbisoftPedometer::ROMRead(u32 addr) const
+{
+    return 0xF7FF;
+}
+
+u8 CartUbisoftPedometer::SRAMRead(u32 addr)
+{
+    switch (addr)
+    {
+    case 0xA000000:
+    {
+        NumSteps = Platform::Addon_GetUbisoftPedometerIndex(UserData);
+        uint8_t data = (NumSteps % 10);
+        return (0xF0 | data);
+    }
+    break;
+    case 0xA000001:
+    {
+        uint8_t data = ((NumSteps / 10) % 10);
+        return (0xF0 | data);
+    }
+    break;
+    case 0xA000002:
+    {
+        uint8_t data = ((NumSteps / 100) % 10);
+        return (0xF0 | data);
+    }
+    break;
+    case 0xA000003:
+    {
+        uint8_t data = ((NumSteps / 1000) % 10);
+        return (0xF0 | data);
+    }
+    break;
+    case 0xA000004:
+    {
+        uint8_t data = ((NumSteps / 10000) % 10);
+        return (0xF0 | data);
+    }
+    break;
+    case 0xA00000C:
+    {
+        NumSteps = 0;
+        return 0;
+    }
+    break;
+    }
+
+    return 0;
+}
+
 CartMagicReader::CartMagicReader(void* userdata) : 
     CartCommon(MagicReader),
     UserData(userdata)
@@ -1220,6 +1290,9 @@ std::unique_ptr<CartCommon> LoadAddon(int type, void* userdata)
 	break;
     case GBAAddon_HCV1000:
         cart = std::make_unique<CartHCV1000>(userdata);
+        break;
+    case GBAAddon_UbisoftPedometer:
+        cart = std::make_unique<CartUbisoftPedometer>(userdata);
         break;
     default:
         Log(LogLevel::Warn, "GBACart: !! invalid addon type %d\n", type);

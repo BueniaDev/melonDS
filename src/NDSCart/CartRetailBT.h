@@ -35,6 +35,13 @@ enum CartBTState
     EventData
 };
 
+enum CartDeviceState
+{
+    Inactive,
+    InquiryStart,
+    InquiryActive
+};
+
 class CartRetailBT : public CartRetail
 {
 public:
@@ -49,6 +56,7 @@ private:
     bool isInterrupt = false;
 
     CartBTState currentState = Waiting;
+    CartDeviceState deviceState = Inactive;
 
     u16 BtCmd = 0;
     bool isBtMsb = false;
@@ -65,6 +73,8 @@ private:
     void AppendCommandComplete(u16 opcode, u8 data[], u32 len);
 
     void ProcessBTCommand();
+    void ProcessDeviceState();
+    void StartInquiry();
 
     u8 inquiryMode = 0;
 };

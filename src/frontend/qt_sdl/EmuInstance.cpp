@@ -2163,6 +2163,8 @@ QString EmuInstance::gbaAddonName(int addon)
         return "Magic Reader";
     case GBAAddon_HCV1000:
         return "HCV-1000 (Sega Card Reader)";
+    case GBAAddon_UbisoftPedometer:
+        return "Ubisoft Thrustmaster Pedometer";
     }
 
     return "???";
@@ -2198,6 +2200,11 @@ int EmuInstance::getMagicReaderIndex()
 std::string EmuInstance::getHCV1000Barcode()
 {
     return localCfg.GetQString("HCV1000.Barcode").toStdString();
+}
+
+int EmuInstance::getUbisoftPedometerIndex()
+{
+    return localCfg.GetInt("UbisoftPedometer.Index");
 }
 
 

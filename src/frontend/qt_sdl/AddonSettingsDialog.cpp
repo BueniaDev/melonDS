@@ -42,6 +42,7 @@ AddonSettingsDialog::AddonSettingsDialog(QWidget* parent) : QDialog(parent), ui(
     ui->sBxMagicReader->setValue(cfg.GetInt("MagicReader.Index"));
 
     ui->txtHCV1000Barcode->setText(cfg.GetQString("HCV1000.Barcode"));
+    ui->sBxUbisoftPedometer->setValue(cfg.GetInt("UbisoftPedometer.Index"));
 
 #define SET_ORIGVAL(type, val) \
     for (type* w : findChildren<type*>(nullptr)) \
@@ -90,6 +91,7 @@ void AddonSettingsDialog::done(int r)
             auto& cfg = emuInstance->getLocalConfig();
             cfg.SetInt("MagicReader.Index", ui->sBxMagicReader->value());
             cfg.SetQString("HCV1000.Barcode", ui->txtHCV1000Barcode->text());
+            cfg.SetInt("UbisoftPedometer.Index", ui->sBxUbisoftPedometer->value());
 
             Config::Save();
         }

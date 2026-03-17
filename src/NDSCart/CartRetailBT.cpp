@@ -56,7 +56,7 @@ u8 CartRetailBT::SPITransmitReceive(u8 val)
 
     //Log(LogLevel::Debug,"POKETYPE SPI: %02X %d %d - %08X\n", val, pos, last, NDS::GetPC(0));
 
-    // Log(LogLevel::Info,"POKETYPE SPI: %02X\n", val);
+    Log(LogLevel::Info,"POKETYPE SPI: %02X\n", val);
 
     switch (currentState)
     {
@@ -166,7 +166,7 @@ u8 CartRetailBT::SPITransmitReceive(u8 val)
         {
             RespPtr = 0;
             RespLen = 0;
-            currentState = Waiting;
+            ProcessDeviceState();
         }
 
         // Log(LogLevel::Info, "Data is 0x%02x\n", data);
@@ -211,6 +211,32 @@ void CartRetailBT::AppendCommandComplete(u16 opcode, u8 data[], u32 len)
     }
 }
 
+void CartRetailBT::ProcessDeviceState()
+{
+    switch (deviceState)
+    {
+    case Inactive:
+    {
+        currentState = Waiting;
+    }
+    break;
+    }
+}
+
+void CartRetailBT::StartInquiry()
+{
+    /*
+    AppendRespByte(0x04);
+    AppendRespByte(0x0F);
+    AppendRespByte(0x04);
+    AppendRespByte(0x00);
+    AppendRespByte(0x01);
+    AppendRespByte(0x01);
+    AppendRespByte(0x04);
+    deviceState = InquiryStart;
+    */
+}
+
 void CartRetailBT::ProcessBTCommand()
 {
     u16 opcode = ((CmdData[2] << 8) | CmdData[1]);
@@ -226,8 +252,8 @@ void CartRetailBT::ProcessBTCommand()
     {
     case 0x0401:
     {
-        // TODO: Figure out the appropriate response packet for this command
-        Log(LogLevel::Info, "HCI_Inquiry (currently unimplemented)\n");
+        Log(LogLevel::Info, "HCI_Inquiry\n");
+        // StartInquiry();
     }
     break;
     case 0x0C01:

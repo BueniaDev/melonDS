@@ -330,6 +330,7 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
                     GBAAddon_GuitarGrip,
                     GBAAddon_MagicReader,
                     GBAAddon_HCV1000,
+                    GBAAddon_UbisoftPedometer,
                     -1
                 };
 
